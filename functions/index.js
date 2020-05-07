@@ -1,5 +1,6 @@
 // The Cloud Functions for Firebase SDK to create Cloud Functions and setup triggers.
 const functions = require('firebase-functions');
+const fieldFilter = require('./fieldFilter');
 // The Firebase Admin SDK to access the Firebase Realtime Database.
 const admin = require('firebase-admin');
 var serviceAccount = require("../button-app-2-6ac1c850c51b.json");
@@ -9,31 +10,33 @@ require("firebase/firestore");
 
 admin.initializeApp(
     {
-    credential: admin.credential.cert(serviceAccount),
-    //databaseURL: "https://******.firebaseio.com"}
-    databaseURL: "http://localhost:8080"}
+        credential: admin.credential.cert(serviceAccount),
+        //databaseURL: "https://******.firebaseio.com"}
+        databaseURL: "http://localhost:8080"
+    }
 );
 let db = admin.firestore();
 let data = {
-    numberOfHit: 3
+    numberOfHit: 3,
+    something:2
 };
 db.collection("labels_collection").doc("test_label1").set(data);
 
 //sendNotification({before: {numberOfHit: 3}, numberOfHit: 4 })
- exports.addMessage = functions.region("europe-west1").https.onRequest(async (req, res) => {
-     // Grab the text parameter.
-     const original = req.query.text;
-     // Push the new message into the Realtime Database using the Firebase Admin SDK.
-     const snapshot = admin.firestore().collection('labels_collection').doc("test_label1").set({numberOfHit: 5});
-     // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
-     res.redirect(200, 'www.google.se');
- });
+exports.addMessage = functions.region("europe-west1").https.onRequest(async (req, res) => {
+    // Grab the text parameter.
+    const original = req.query.text;
+    // Push the new message into the Realtime Database using the Firebase Admin SDK.
+    const snapshot = admin.firestore().collection('labels_collection').doc("test_label1").set({numberOfHit: 5});
+    // Redirect with 303 SEE OTHER to the URL of the pushed object in the Firebase console.
+    res.redirect(200, 'www.google.se');
+});
 
 
 // Listens for new messages aded to /messages/:pushId/original and creates an
 // uppercase version of the message to /messages/:pushId/uppercase
 exports.sendNotification = functions.region("europe-west1").firestore.document('labels_collection/test_label1')
-    .onUpdate(async (change, context) => {
+    .onUpdate(fieldFilter.field('numberOfHit', 'CHANGED', async (change, context) => {
         // Grab the current value of what was written to the Realtime Database.
         const numHits = change.after.data().numberOfHit;
 
@@ -75,4 +78,4 @@ exports.sendNotification = functions.region("europe-west1").firestore.document('
         // Setting an "uppercase" sibling in the Realtime Database returns a Promise.
         // return snapshot.({'uppercase': uppercase});
         return "status is" + status;
-    });
+    }));
