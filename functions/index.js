@@ -9,7 +9,7 @@ require("firebase/firestore");
 
 admin.initializeApp(
     {
-    //credential: admin.credential.cert(serviceAccount),
+    credential: admin.credential.cert(serviceAccount),
     //databaseURL: "https://******.firebaseio.com"}
     databaseURL: "http://localhost:8080"}
 );
